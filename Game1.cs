@@ -11,7 +11,8 @@ public class Game1 : Game
     private const int Width = 640;
     private const int Height = 480;
     private const int Velocity = 500;
-    private const int BallSpeed = 200; 
+    private const int BallSpeed = 300;
+    private const int CompSpeed = 250;
     
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
@@ -85,6 +86,16 @@ public class Game1 : Game
 
         CheckBallPaddleIntersection(_playerRect);
         CheckBallPaddleIntersection(_compRect);
+        
+        // ==== COMPUTER LOGIC =====//
+        if (_ballRect.Center.Y < _compRect.Center.Y)
+        {
+            _compRect.Y = (int)MathHelper.Clamp(_compRect.Y - CompSpeed * delta, 0f, Height - _compRect.Height);
+        }
+        if (_ballRect.Center.Y > _compRect.Center.Y)
+        {
+            _compRect.Y = (int)MathHelper.Clamp(_compRect.Y + CompSpeed * delta, 0f, Height - _compRect.Height);
+        } 
 
         base.Update(gameTime);
     }
@@ -120,8 +131,8 @@ public class Game1 : Game
             {
                 _ballYDir = 0;
             }
-
             _ballXDir *= -1;
+            _ballRect.X = paddle.X + paddle.Width * _ballXDir + _ballXDir;
         }
     }
 }
