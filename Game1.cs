@@ -36,8 +36,8 @@ public class Game1 : Game
 
     protected override void Initialize()
     {
-        _playerRect = new Rectangle(20, 200, 20, 80);
-        _compRect = new Rectangle(600, 200, 20, 80);
+        _compRect = new Rectangle(20, 200, 20, 80);
+        _playerRect = new Rectangle(600, 200, 20, 80);
         _ballRect = new Rectangle(310, 230, 20, 20);
 
         base.Initialize();
@@ -83,6 +83,9 @@ public class Game1 : Game
             _ballYDir *= -1;
         }
 
+        CheckBallPaddleIntersection(_playerRect);
+        CheckBallPaddleIntersection(_compRect);
+
         base.Update(gameTime);
     }
 
@@ -99,5 +102,26 @@ public class Game1 : Game
         _spriteBatch.End();
 
         base.Draw(gameTime);
+    }
+    
+    private void CheckBallPaddleIntersection(Rectangle paddle)
+    {
+        if (_ballRect.Intersects(paddle))
+        {
+            if (_ballRect.Center.Y < paddle.Center.Y)
+            {
+                _ballYDir = -1;
+            }
+            else if (_ballRect.Center.Y > paddle.Center.Y)
+            {
+                _ballYDir = 1;
+            }
+            else
+            {
+                _ballYDir = 0;
+            }
+
+            _ballXDir *= -1;
+        }
     }
 }
