@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Security.Cryptography.Pkcs;
+using System.Threading;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using SharpDX.Direct3D9;
 
 namespace MonoPong;
 
@@ -17,6 +20,10 @@ public class Game1 : Game
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
 
+    private SpriteFont _font;
+
+    private readonly Point _centralPoint = new Point(Width / 2, Height / 2);
+
     private Rectangle _playerRect;
     private Rectangle _compRect;
     private Rectangle _ballRect;
@@ -24,6 +31,11 @@ public class Game1 : Game
 
     private int _ballXDir = -1;
     private int _ballYDir = -1;
+
+    private int _playerScore = 0;
+    private int _compScore = 0;
+    private bool _ballMoving = true;
+    private Stopwatch _scoreStopwatch = new Stopwatch();
 
     public Game1()
     {
@@ -50,6 +62,8 @@ public class Game1 : Game
 
         _tPaddle = new Texture2D(GraphicsDevice, 1, 1);
         _tPaddle.SetData(new[] { Color.White });
+
+        _font = Content.Load<SpriteFont>("MainFont");
     }
 
     protected override void Update(GameTime gameTime)
@@ -72,9 +86,12 @@ public class Game1 : Game
         }
         
         //===== BALL LOGIC =====//
-        _ballRect.X = (int)MathHelper.Clamp(_ballRect.X + BallSpeed * _ballXDir * delta, 0f, Width - _ballRect.Width);
-        _ballRect.Y = (int)MathHelper.Clamp(_ballRect.Y + BallSpeed * _ballYDir * delta, 0f, Height - _ballRect.Height);
-
+        if (_ballMoving)
+        {
+            _ballRect.X = (int)MathHelper.Clamp(_ballRect.X + BallSpeed * _ballXDir * delta, 0f, Width - _ballRect.Width);
+            _ballRect.Y = (int)MathHelper.Clamp(_ballRect.Y + BallSpeed * _ballYDir * delta, 0f, Height - _ballRect.Height);    
+        }
+        
         if (_ballRect.X <= 0 || _ballRect.X >= Width - _ballRect.Width)
         {
             _ballXDir *= -1;
@@ -95,9 +112,35 @@ public class Game1 : Game
         if (_ballRect.Center.Y > _compRect.Center.Y)
         {
             _compRect.Y = (int)MathHelper.Clamp(_compRect.Y + CompSpeed * delta, 0f, Height - _compRect.Height);
-        } 
+        }
+
+        if (_ballRect.Left < _compRect.Left)
+        {
+            _playerScore += 1;
+            restartAfterPointScored();
+        }
+
+        if (_ballRect.Right > _playerRect.Right)
+        {
+            _compScore += 1;
+            restartAfterPointScored();
+        }
+
+        if (_scoreStopwatch.ElapsedMilliseconds >= 3000)
+        {
+            _scoreStopwatch.Reset();
+            _ballMoving = true;
+        }
 
         base.Update(gameTime);
+    }
+
+    private void restartAfterPointScored()
+    {
+        _ballRect.Location = _centralPoint;
+        _ballXDir *= -1;
+        _ballMoving = false;
+        _scoreStopwatch.Start();
     }
 
     protected override void Draw(GameTime gameTime)
@@ -109,6 +152,9 @@ public class Game1 : Game
         _spriteBatch.Draw(_tPaddle, _playerRect, Color.White);
         _spriteBatch.Draw(_tPaddle, _compRect, Color.White);
         _spriteBatch.Draw(_tPaddle, _ballRect, Color.White);
+        
+        _spriteBatch.DrawString(_font, _compScore.ToString(), new Vector2(280, 0), Color.White);
+        _spriteBatch.DrawString(_font, _playerScore.ToString(), new Vector2(360, 0), Color.White);
 
         _spriteBatch.End();
 
